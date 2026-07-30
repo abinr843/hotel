@@ -61,8 +61,8 @@ export default defineConfig({
       },
     }),
   ],
-  // Must match Django's STATIC_URL so django-vite resolves assets correctly
-  base: '/static/',
+  // Must match Django's STATIC_URL so django-vite resolves assets correctly (Disabled for standalone Vercel deployment)
+  // base: '/static/',
   server: {
     port: 5173,
     // Allow Django dev server to request assets from Vite dev server
@@ -74,10 +74,6 @@ export default defineConfig({
     manifest: 'manifest.json',
     outDir: resolve('./dist'),
     emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: resolve('./src/main.jsx'),
-      },
-    },
+    // Removed rollupOptions.input override so Vite uses index.html as the entry point for Vercel
   },
 });
