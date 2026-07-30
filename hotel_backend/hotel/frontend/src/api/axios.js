@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+let baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+if (!baseURL.endsWith('/')) {
+  baseURL += '/';
+}
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,6 +33,11 @@ export function setNetworkErrorCallback(onError, onRecovered) {
  */
 API.interceptors.request.use(
   (config) => {
+    // Fix absolute path resolution issue in Axios when baseURL is a full URL
+    if (config.url && config.url.startsWith('/')) {
+      config.url = config.url.substring(1);
+    }
+    
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
