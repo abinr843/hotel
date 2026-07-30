@@ -1,0 +1,179 @@
+.menu-screen {
+  padding: var(--space-xl);
+}
+
+/* --- Header --- */
+.menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+.menu-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-xs);
+}
+
+/* --- Filter Chips --- */
+.menu-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.filter-chip {
+  min-height: 36px;
+  padding: var(--space-xs) var(--space-base);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.filter-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.filter-chip-active {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* --- Empty State --- */
+.menu-empty {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--color-text-muted);
+}
+.menu-empty-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: var(--space-base);
+}
+
+/* --- Groups --- */
+.menu-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.menu-group-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* --- Table --- */
+.menu-table {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.menu-table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.8fr 0.8fr 1fr;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-elevated);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.menu-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.8fr 0.8fr 1fr;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  transition: background var(--transition-fast);
+}
+.menu-table-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.row-unavailable {
+  opacity: 0.5;
+}
+
+.menu-item-name {
+  font-weight: var(--font-weight-medium);
+}
+.menu-item-rate {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
+}
+
+/* --- Badges --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+.badge-info {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+.badge-muted {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+/* --- Action Buttons --- */
+.menu-item-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+}
+.edit-btn:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+.delete-btn:hover {
+  border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+/* --- Form inside Modal --- */
+.menu-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.menu-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+}

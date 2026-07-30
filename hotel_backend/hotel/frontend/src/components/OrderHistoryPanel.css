@@ -1,0 +1,263 @@
+/* ========================================================================
+   ORDER HISTORY PANEL — Slide-out drawer
+   ======================================================================== */
+
+/* Backdrop */
+.history-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+  animation: backdrop-fade-in 0.2s ease;
+}
+@keyframes backdrop-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Panel */
+.history-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-border);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
+  animation: panel-slide-in 0.25s ease;
+}
+@keyframes panel-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Header */
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-base) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  flex-shrink: 0;
+}
+.history-header h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.history-close-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+.history-close-btn:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+/* Tabs */
+.history-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-base) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.history-tab {
+  flex: 1;
+  padding: var(--space-sm) var(--space-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+.history-tab:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+.history-tab.active {
+  background: linear-gradient(135deg, var(--color-accent), #6366f1);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Order list */
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-base);
+}
+
+/* Empty state */
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--color-text-muted);
+  gap: var(--space-base);
+}
+.history-empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.5;
+}
+
+/* Order card */
+.history-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-base);
+  margin-bottom: var(--space-sm);
+  transition: all var(--transition-fast);
+}
+.history-card:hover {
+  border-color: var(--color-text-muted);
+}
+
+.history-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+.history-card-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.history-order-num {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.history-card-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Status badge */
+.history-status-badge {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+.status-completed {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.status-voided {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.status-draft {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+/* Card body */
+.history-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.history-card-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+.history-item-tag {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.history-item-more {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 2px 6px;
+}
+
+.history-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.history-card-method {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.history-card-total {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+/* Void reason */
+.history-void-reason {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  font-style: italic;
+}
+
+/* Void button */
+.history-void-btn {
+  margin-top: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-base);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.06);
+  color: var(--color-danger);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.history-void-btn:hover {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .history-panel {
+    width: 100vw;
+  }
+}

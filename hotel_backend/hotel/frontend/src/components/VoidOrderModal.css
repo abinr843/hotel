@@ -1,0 +1,101 @@
+/* ========================================================================
+   VOID ORDER MODAL
+   ======================================================================== */
+
+.void-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.void-order-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-base) var(--space-lg);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+.void-order-id {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.void-order-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+.void-order-total {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.void-warning {
+  padding: var(--space-md) var(--space-base);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.void-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.void-textarea {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+  min-height: 80px;
+}
+.void-textarea:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+.void-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.void-error {
+  padding: var(--space-md) var(--space-base);
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.void-actions {
+  display: flex;
+  gap: var(--space-base);
+  justify-content: flex-end;
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Override the primary button style for void — make it red */
+.void-confirm-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  border-color: transparent !important;
+}
+.void-confirm-btn:hover {
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4) !important;
+}

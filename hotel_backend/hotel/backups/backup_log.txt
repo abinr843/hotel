@@ -1,0 +1,1 @@
+30-07-2026  6:16:38.65 - SUCCESS - C:\Users\abinr\PycharmProjects\PythonProject2\hotel_backend\hotel\scripts\..\backups\hotel_backup_20260730_061638.dump 

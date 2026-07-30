@@ -1,0 +1,249 @@
+.settlement-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
+}
+.settlement-header {
+  margin-bottom: var(--space-xl);
+}
+.settlement-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-xs);
+}
+.settlement-header p {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+}
+
+/* --- Create Settlement Form --- */
+.settlement-form-card {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+.settlement-form-card h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.settlement-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+@media (max-width: 600px) {
+  .settlement-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Shift Summary (Blind Drop) --- */
+.shift-summary {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.shift-summary-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.shift-summary-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+.shift-summary-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+}
+.shift-summary-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  line-height: 1.5;
+}
+
+/* --- No Orders Empty State --- */
+.no-orders-state {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-xl);
+}
+.no-orders-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+.no-orders-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+}
+.no-orders-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* --- History Table --- */
+.history-card {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-xl);
+}
+.history-card h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.settlement-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.settlement-table th {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border);
+}
+.settlement-table td {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+.settlement-table tr:last-child td {
+  border-bottom: none;
+}
+.settlement-table tr:hover td {
+  background: var(--color-bg-tertiary);
+}
+
+/* --- Discrepancy Colors --- */
+.disc-shortage {
+  color: #ef4444;
+  font-weight: var(--font-weight-bold);
+}
+.disc-surplus {
+  color: #f59e0b;
+  font-weight: var(--font-weight-bold);
+}
+.disc-match {
+  color: #22c55e;
+  font-weight: var(--font-weight-bold);
+}
+
+/* Legacy compat (used in history table) */
+.disc-positive { color: #f59e0b; font-weight: var(--font-weight-bold); }
+.disc-negative { color: #ef4444; font-weight: var(--font-weight-bold); }
+.disc-zero { color: #22c55e; }
+
+.pdf-btn {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all 0.2s;
+}
+.pdf-btn:hover {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+/* --- Settlement Result (Post-Settle) --- */
+.settlement-result {
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+}
+.settlement-result.result-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.settlement-result h3 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+}
+.locked-notice {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.result-item-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.result-item-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.new-shift-btn {
+  padding: 0.5rem 1.25rem;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s;
+}
+.new-shift-btn:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-primary);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: var(--space-xl);
+  font-size: var(--font-size-sm);
+}

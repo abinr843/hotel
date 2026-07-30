@@ -1,0 +1,101 @@
+/* ========================================================================
+   ITEM CUSTOMIZATION MODAL
+   ======================================================================== */
+
+.customize-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.customize-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-base) var(--space-lg);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.customize-item-name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.customize-item-std-rate {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.customize-field {
+  position: relative;
+}
+
+.rate-override-tag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.customize-textarea {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+  min-height: 80px;
+}
+.customize-textarea:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+.customize-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.customize-qty-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  width: fit-content;
+}
+
+.customize-qty-value {
+  width: 48px;
+  text-align: center;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.customize-actions {
+  display: flex;
+  gap: var(--space-base);
+  justify-content: flex-end;
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--color-border);
+}
