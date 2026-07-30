@@ -61,8 +61,8 @@ export default defineConfig({
       },
     }),
   ],
-  // Must match Django's STATIC_URL so django-vite resolves assets correctly
-  base: '/static/',
+  // Base path for Vercel deployment
+  base: '/',
   server: {
     port: 5173,
     // Allow Django dev server to request assets from Vite dev server
@@ -70,14 +70,7 @@ export default defineConfig({
     origin: 'http://localhost:5173',
   },
   build: {
-    // Generate manifest.json for django-vite to map hashed filenames
-    manifest: 'manifest.json',
     outDir: resolve('./dist'),
     emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: resolve('./src/main.jsx'),
-      },
-    },
   },
 });
