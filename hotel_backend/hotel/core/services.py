@@ -56,9 +56,10 @@ def recalculate_order_total(order):
     return order
 
 
-def create_draft_order():
+def create_draft_order(table_number=''):
     """
     Creates a new Order in DRAFT status.
+    Optionally assigns a table_number.
     Attaches the current open shift if one exists.
     """
     from .models import Order, EODSettlement
@@ -70,6 +71,7 @@ def create_draft_order():
     order = Order.objects.create(
         status=Order.StatusChoices.DRAFT,
         shift=current_shift,
+        table_number=table_number or None,
     )
     return order
 
@@ -195,15 +197,16 @@ def handle_cart_action(order, action, data):
     return order
 
 
-def checkout_order(order, payment_method, cash_tendered=None):
+def checkout_order(order, cash_amount=None, upi_amount=None, card_amount=None, cash_tendered=None):
     """
-    Finalizes a DRAFT order to COMPLETED.
+    Finalizes a DRAFT order to COMPLETED with split payment support.
 
     - Explicitly locks the order row via select_for_update to prevent races.
     - Validates status == DRAFT (raises OrderNotEditableError otherwise).
     - Validates that the order has at least one item (raises EmptyOrderError).
+    - Validates cash_amount + upi_amount + card_amount == total_amount.
     - Computes total from frozen snapshot_rate × quantity (never re-reads MenuItem).
-    - Sets payment_method, computes change_due for CASH, transitions to COMPLETED.
+    - Sets split payment amounts, computes change_due for CASH, transitions to COMPLETED.
 
     Returns the updated order.
     """
@@ -230,12 +233,27 @@ def checkout_order(order, payment_method, cash_tendered=None):
     recalculate_order_total(locked_order)
     locked_order.refresh_from_db()
 
-    # Set payment details
-    locked_order.payment_method = payment_method
+    # Normalize payment amounts
+    cash = cash_amount or Decimal('0.00')
+    upi = upi_amount or Decimal('0.00')
+    card = card_amount or Decimal('0.00')
+    payment_sum = cash + upi + card
 
-    if payment_method == 'CASH' and cash_tendered is not None:
+    # Validate payment sum matches order total
+    if payment_sum != locked_order.total_amount:
+        from rest_framework.exceptions import ValidationError
+        raise ValidationError({
+            'message': f'Payment total (₹{payment_sum}) does not match order total (₹{locked_order.total_amount}).'
+        })
+
+    # Set split payment amounts
+    locked_order.cash_amount = cash
+    locked_order.upi_amount = upi
+    locked_order.card_amount = card
+
+    if cash > Decimal('0.00') and cash_tendered is not None:
         locked_order.cash_tendered = cash_tendered
-        locked_order.change_due = cash_tendered - locked_order.total_amount
+        locked_order.change_due = cash_tendered - cash
     else:
         locked_order.cash_tendered = None
         locked_order.change_due = Decimal('0.00')
@@ -243,11 +261,26 @@ def checkout_order(order, payment_method, cash_tendered=None):
     # Transition to COMPLETED
     locked_order.status = Order.StatusChoices.COMPLETED
     locked_order.save(update_fields=[
-        'status', 'payment_method', 'total_amount',
+        'status', 'total_amount',
+        'cash_amount', 'upi_amount', 'card_amount',
         'cash_tendered', 'change_due',
     ])
 
     return locked_order
+
+
+def delete_draft_order(order):
+    """
+    Permanently deletes a DRAFT order.
+    Raises OrderNotEditableError if the order is not in DRAFT status.
+    """
+    from .models import Order
+    from hotel.custom_exceptions import OrderNotEditableError
+
+    if order.status != Order.StatusChoices.DRAFT:
+        raise OrderNotEditableError("Only DRAFT orders can be deleted.")
+
+    order.delete()
 
 
 def void_order(order, pin, reason, voided_by_user=None):
@@ -344,21 +377,15 @@ def get_daily_analytics(target_date=None):
 
     # Revenue aggregation (completed only)
     revenue_agg = completed.aggregate(
-        total=Sum('total_amount', output_field=DecimalField())
+        total=Sum('total_amount', output_field=DecimalField()),
+        cash_total=Sum('cash_amount', output_field=DecimalField()),
+        upi_total=Sum('upi_amount', output_field=DecimalField()),
+        card_total=Sum('card_amount', output_field=DecimalField()),
     )
     total_revenue = revenue_agg['total'] or Decimal('0.00')
-
-    # Revenue by payment method
-    by_method = (
-        completed
-        .values('payment_method')
-        .annotate(method_total=Sum('total_amount', output_field=DecimalField()))
-        .order_by('payment_method')
-    )
-    revenue_by_method = {
-        entry['payment_method']: str(entry['method_total'] or Decimal('0.00'))
-        for entry in by_method
-    }
+    cash_revenue = revenue_agg['cash_total'] or Decimal('0.00')
+    upi_revenue = revenue_agg['upi_total'] or Decimal('0.00')
+    card_revenue = revenue_agg['card_total'] or Decimal('0.00')
 
     # Top-selling items today (from COMPLETED orders only)
     top_items = (
@@ -388,9 +415,11 @@ def get_daily_analytics(target_date=None):
     return {
         'date': str(target_date),
         'total_revenue': str(total_revenue),
+        'cash_total': str(cash_revenue),
+        'upi_total': str(upi_revenue),
+        'card_total': str(card_revenue),
         'total_orders': completed.count(),
         'total_voided': voided.count(),
-        'revenue_by_payment_method': revenue_by_method,
         'top_items': top_items_list,
     }
 
@@ -513,18 +542,10 @@ def run_eod_settlement(physical_cash_counted, notes=''):
     if not unsettled.exists():
         raise ShiftAlreadySettledError()
 
-    # Aggregate system totals
+    # Aggregate system totals using split payment columns
     agg = unsettled.aggregate(
-        cash_total=Sum(
-            'total_amount',
-            filter=Q(payment_method=Order.PaymentMethodChoices.CASH),
-            output_field=DecimalField(),
-        ),
-        upi_total=Sum(
-            'total_amount',
-            filter=Q(payment_method=Order.PaymentMethodChoices.UPI),
-            output_field=DecimalField(),
-        ),
+        cash_total=Sum('cash_amount', output_field=DecimalField()),
+        upi_total=Sum('upi_amount', output_field=DecimalField()),
     )
 
     system_cash = agg['cash_total'] or Decimal('0.00')
@@ -542,8 +563,17 @@ def run_eod_settlement(physical_cash_counted, notes=''):
         notes=notes or '',
     )
 
-    # Lock all unsettled orders (COMPLETED + VOIDED + DRAFT) by attaching to this shift
-    Order.objects.filter(shift__isnull=True).update(shift=settlement)
+    # Lock all unsettled orders (COMPLETED + VOIDED) by attaching to this shift
+    Order.objects.filter(
+        shift__isnull=True,
+        status__in=[Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELLED_VOIDED],
+    ).update(shift=settlement)
+
+    # Auto-cleanup: delete all stale DRAFT orders at settlement time
+    Order.objects.filter(
+        shift__isnull=True,
+        status=Order.StatusChoices.DRAFT,
+    ).delete()
 
     return settlement
 
@@ -580,16 +610,8 @@ def preview_eod_settlement():
         }
 
     agg = unsettled.aggregate(
-        cash_total=Sum(
-            'total_amount',
-            filter=Q(payment_method=Order.PaymentMethodChoices.CASH),
-            output_field=DecimalField(),
-        ),
-        upi_total=Sum(
-            'total_amount',
-            filter=Q(payment_method=Order.PaymentMethodChoices.UPI),
-            output_field=DecimalField(),
-        ),
+        cash_total=Sum('cash_amount', output_field=DecimalField()),
+        upi_total=Sum('upi_amount', output_field=DecimalField()),
     )
 
     return {

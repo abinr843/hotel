@@ -35,9 +35,10 @@ export default function DashboardScreen() {
   }, [fetchData]);
 
   const totalRevenue = parseFloat(analytics?.total_revenue || 0);
-  const cashRevenue = parseFloat(analytics?.revenue_by_payment_method?.CASH || 0);
-  const upiRevenue = parseFloat(analytics?.revenue_by_payment_method?.UPI || 0);
-  const maxRevenue = Math.max(cashRevenue, upiRevenue, 1);
+  const cashRevenue = parseFloat(analytics?.cash_total || 0);
+  const upiRevenue = parseFloat(analytics?.upi_total || 0);
+  const cardRevenue = parseFloat(analytics?.card_total || 0);
+  const maxRevenue = Math.max(cashRevenue, upiRevenue, cardRevenue, 1);
 
   // Split ranking into top performers and underperformers
   const itemsWithSales = ranking.filter((item) => item.total_qty > 0);
@@ -109,6 +110,13 @@ export default function DashboardScreen() {
           <span className="revenue-card-label">UPI Collected</span>
           <span className="revenue-card-value">{formatRupee(upiRevenue)}</span>
         </div>
+        {cardRevenue > 0 && (
+          <div className="revenue-card card-card">
+            <span className="revenue-card-icon">💳</span>
+            <span className="revenue-card-label">Card Collected</span>
+            <span className="revenue-card-value">{formatRupee(cardRevenue)}</span>
+          </div>
+        )}
         <div className="revenue-card card-orders">
           <span className="revenue-card-icon">📋</span>
           <span className="revenue-card-label">Orders / Cancelled</span>
@@ -230,6 +238,7 @@ export default function DashboardScreen() {
             {[
               { key: 'CASH', label: '💵 Cash', value: cashRevenue, barClass: 'bar-cash' },
               { key: 'UPI', label: '📱 UPI', value: upiRevenue, barClass: 'bar-upi' },
+              ...(cardRevenue > 0 ? [{ key: 'CARD', label: '💳 Card', value: cardRevenue, barClass: 'bar-card' }] : []),
             ].map((method) => (
               <div key={method.key} className="method-bar-item">
                 <div className="method-bar-label">

@@ -33,9 +33,12 @@ export default function OrderHistoryPanel({ isOpen, onClose }) {
     setLoading(true);
     try {
       const params = { date: 'today' };
-      if (activeTab !== 'all') params.status = activeTab;
+      if (activeTab !== 'all') {
+        params.status = activeTab;
+      }
       const data = await listOrders(params);
-      setOrders(data);
+      // Filter out DRAFT orders from history (backend already does this, but belt & suspenders)
+      setOrders(data.filter(o => o.status !== 'DRAFT'));
     } catch {
       toast.error('Failed to load orders.');
     } finally {
@@ -134,7 +137,10 @@ export default function OrderHistoryPanel({ isOpen, onClose }) {
                     )}
                   </div>
                   <div className="history-card-meta">
-                    <span className="history-card-method">{order.payment_method || '—'}</span>
+                    {order.table_number && (
+                      <span className="history-card-table">🍽️ {order.table_number}</span>
+                    )}
+                    <span className="history-card-method">{order.payment_summary || '—'}</span>
                     <span className="history-card-total">{formatRupee(order.total_amount)}</span>
                   </div>
                 </div>

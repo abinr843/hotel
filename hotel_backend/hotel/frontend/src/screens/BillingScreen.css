@@ -544,6 +544,52 @@
   overflow: hidden;
 }
 
+/* --- Table Number Input Row --- */
+.cart-table-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+.cart-table-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.cart-table-input {
+  flex: 1;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-input);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  transition: border-color var(--transition-fast);
+  max-width: 140px;
+}
+.cart-table-input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+.cart-table-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* --- History Table Badge --- */
+.history-card-table {
+  font-size: var(--font-size-xs);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(139, 92, 246, 0.1);
+  color: #a78bfa;
+  font-weight: var(--font-weight-semibold);
+}
+
 /* ===== Responsive: Stack on narrow viewports ===== */
 @media (max-width: 900px) {
   .billing-screen {

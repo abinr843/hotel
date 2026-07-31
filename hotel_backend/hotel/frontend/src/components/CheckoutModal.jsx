@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import Modal from './Modal';
 import Button from './Button';
@@ -8,15 +8,15 @@ import { getUpiLink } from '../api/orders';
 import './CheckoutModal.css';
 
 /**
- * CheckoutModal — Finalize the current DRAFT order.
+ * CheckoutModal — Finalize the current DRAFT order with split payments.
  *
  * - Scrollable item summary at the top
- * - Payment method selection: CASH, UPI, CARD
- * - CASH: Quick-cash tender keypad & change due calculation
+ * - Split payment: Cash, UPI, Card amount fields
+ * - Quick-select buttons for single-method payments
+ * - Live "Remaining Balance" indicator
+ * - CASH: tender entry + change due
  * - UPI: Generates and displays scannable QR code via UPI deep-link
  */
-
-const QUICK_CASH_AMOUNTS = [100, 200, 500, 1000, 2000];
 
 export default function CheckoutModal({
   isOpen,
@@ -28,7 +28,9 @@ export default function CheckoutModal({
   onCheckout,
   loading = false,
 }) {
-  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [cashAmount, setCashAmount] = useState('');
+  const [upiAmount, setUpiAmount] = useState('');
+  const [cardAmount, setCardAmount] = useState('');
   const [cashTendered, setCashTendered] = useState('');
   const [error, setError] = useState('');
 
@@ -37,12 +39,22 @@ export default function CheckoutModal({
   const [upiLoading, setUpiLoading] = useState(false);
 
   const total = parseFloat(totalAmount) || 0;
+  const cash = parseFloat(cashAmount) || 0;
+  const upi = parseFloat(upiAmount) || 0;
+  const card = parseFloat(cardAmount) || 0;
   const tendered = parseFloat(cashTendered) || 0;
-  const changeDue = tendered - total;
 
-  // Fetch UPI link when UPI is selected
+  const paymentSum = cash + upi + card;
+  const remaining = total - paymentSum;
+  const changeDue = cash > 0 && tendered > cash ? tendered - cash : 0;
+  const isBalanced = Math.abs(remaining) < 0.01;
+
+  // Determine dominant payment method for UPI QR
+  const showUpiQr = upi > 0;
+
+  // Fetch UPI link when UPI amount is set
   useEffect(() => {
-    if (paymentMethod === 'UPI' && orderId && isOpen) {
+    if (showUpiQr && orderId && isOpen) {
       const fetchUpi = async () => {
         setUpiLoading(true);
         setError('');
@@ -58,30 +70,28 @@ export default function CheckoutModal({
       };
       fetchUpi();
     }
-  }, [paymentMethod, orderId, isOpen]);
+  }, [showUpiQr, orderId, isOpen]);
 
   const handleSubmit = async () => {
     setError('');
 
-    if (paymentMethod === 'CASH') {
-      if (!cashTendered || tendered <= 0) {
-        setError('Please enter the cash tendered amount.');
-        return;
-      }
-      if (tendered < total) {
-        setError(`Cash tendered (${formatRupee(tendered)}) is less than the total (${formatRupee(total)}).`);
-        return;
-      }
-    }
-
-    if (paymentMethod === 'UPI' && !upiData && !error) {
-      setError('Waiting for UPI QR code to generate...');
+    if (!isBalanced) {
+      setError(`Payment amounts must equal ${formatRupee(total)}. Remaining: ${formatRupee(remaining)}`);
       return;
     }
 
-    const paymentData = { payment_method: paymentMethod };
-    if (paymentMethod === 'CASH') {
-      paymentData.cash_tendered = parseFloat(cashTendered).toFixed(2);
+    if (cash > 0 && tendered < cash) {
+      setError(`Cash tendered (${formatRupee(tendered)}) must be at least ${formatRupee(cash)}.`);
+      return;
+    }
+
+    const paymentData = {
+      cash_amount: cash.toFixed(2),
+      upi_amount: upi.toFixed(2),
+      card_amount: card.toFixed(2),
+    };
+    if (cash > 0) {
+      paymentData.cash_tendered = (tendered || cash).toFixed(2);
     }
 
     try {
@@ -91,32 +101,54 @@ export default function CheckoutModal({
     }
   };
 
-  const handleQuickCash = (amount) => {
-    setCashTendered(String(amount));
+  // Quick-select handlers
+  const handleFullCash = () => {
+    setCashAmount(String(total.toFixed(2)));
+    setUpiAmount('');
+    setCardAmount('');
+    setError('');
+  };
+  const handleFullUpi = () => {
+    setUpiAmount(String(total.toFixed(2)));
+    setCashAmount('');
+    setCardAmount('');
+    setError('');
+  };
+  const handleFullCard = () => {
+    setCardAmount(String(total.toFixed(2)));
+    setCashAmount('');
+    setUpiAmount('');
     setError('');
   };
 
-  const handleExactAmount = () => {
-    setCashTendered(String(total.toFixed(2)));
+  // Fill remaining into a specific method
+  const handleFillRemaining = (method) => {
+    const rem = Math.max(0, remaining);
+    if (rem <= 0) return;
+    if (method === 'cash') setCashAmount(String((cash + rem).toFixed(2)));
+    if (method === 'upi') setUpiAmount(String((upi + rem).toFixed(2)));
+    if (method === 'card') setCardAmount(String((card + rem).toFixed(2)));
     setError('');
   };
 
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setPaymentMethod('CASH');
+      setCashAmount('');
+      setUpiAmount('');
+      setCardAmount('');
       setCashTendered('');
       setError('');
       setUpiData(null);
     }
   }, [isOpen]);
 
-
-  const getSubmitLabel = () => {
-    if (paymentMethod === 'CASH') return `Complete & Print Bill — ${formatRupee(total)}`;
-    if (paymentMethod === 'UPI') return `Payment Received & Print Bill`;
-    return `Complete & Print Bill`;
-  };
+  // Status indicator
+  const remainingStatus = useMemo(() => {
+    if (remaining > 0.01) return { label: `₹${remaining.toFixed(2)} remaining`, className: 'remaining-pending' };
+    if (remaining < -0.01) return { label: `₹${Math.abs(remaining).toFixed(2)} over`, className: 'remaining-over' };
+    return { label: '✓ Balanced', className: 'remaining-balanced' };
+  }, [remaining]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Checkout" size="md">
@@ -158,32 +190,105 @@ export default function CheckoutModal({
           </div>
         </div>
 
-        {/* Payment method selector */}
+        {/* Quick-select payment buttons */}
         <div className="checkout-section">
-          <label className="input-label">Payment Method</label>
+          <label className="input-label">Quick Select</label>
           <div className="payment-methods">
-            {[
-              { key: 'CASH', label: '💵 Cash', },
-              { key: 'UPI', label: '📱 UPI', },
-              { key: 'CARD', label: '💳 Card', },
-            ].map((m) => (
-              <button
-                key={m.key}
-                type="button"
-                className={`payment-method-btn ${paymentMethod === m.key ? 'active' : ''}`}
-                onClick={() => {
-                  setPaymentMethod(m.key);
-                  setError('');
-                }}
-              >
-                {m.label}
-              </button>
-            ))}
+            <button type="button" className="payment-method-btn" onClick={handleFullCash}>
+              💵 Full Cash
+            </button>
+            <button type="button" className="payment-method-btn" onClick={handleFullUpi}>
+              📱 Full UPI
+            </button>
+            <button type="button" className="payment-method-btn" onClick={handleFullCard}>
+              💳 Full Card
+            </button>
           </div>
         </div>
 
-        {/* CASH: tender entry */}
-        {paymentMethod === 'CASH' && (
+        {/* Split Payment Inputs */}
+        <div className="checkout-section checkout-split-section">
+          <label className="input-label">Split Payment</label>
+
+          <div className="split-payment-grid">
+            {/* Cash */}
+            <div className="split-payment-row">
+              <div className="split-payment-label">
+                <span className="split-icon">💵</span> Cash
+              </div>
+              <div className="split-payment-input-group">
+                <input
+                  type="number"
+                  className="split-payment-input"
+                  placeholder="0.00"
+                  value={cashAmount}
+                  onChange={(e) => { setCashAmount(e.target.value); setError(''); }}
+                  min="0"
+                  step="0.01"
+                />
+                {remaining > 0.01 && (
+                  <button type="button" className="fill-remaining-btn" onClick={() => handleFillRemaining('cash')} title="Fill remaining">
+                    +Rest
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* UPI */}
+            <div className="split-payment-row">
+              <div className="split-payment-label">
+                <span className="split-icon">📱</span> UPI
+              </div>
+              <div className="split-payment-input-group">
+                <input
+                  type="number"
+                  className="split-payment-input"
+                  placeholder="0.00"
+                  value={upiAmount}
+                  onChange={(e) => { setUpiAmount(e.target.value); setError(''); }}
+                  min="0"
+                  step="0.01"
+                />
+                {remaining > 0.01 && (
+                  <button type="button" className="fill-remaining-btn" onClick={() => handleFillRemaining('upi')} title="Fill remaining">
+                    +Rest
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Card */}
+            <div className="split-payment-row">
+              <div className="split-payment-label">
+                <span className="split-icon">💳</span> Card
+              </div>
+              <div className="split-payment-input-group">
+                <input
+                  type="number"
+                  className="split-payment-input"
+                  placeholder="0.00"
+                  value={cardAmount}
+                  onChange={(e) => { setCardAmount(e.target.value); setError(''); }}
+                  min="0"
+                  step="0.01"
+                />
+                {remaining > 0.01 && (
+                  <button type="button" className="fill-remaining-btn" onClick={() => handleFillRemaining('card')} title="Fill remaining">
+                    +Rest
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Remaining balance indicator */}
+          <div className={`remaining-indicator ${remainingStatus.className}`}>
+            {remainingStatus.label}
+          </div>
+        </div>
+
+        {/* Cash Tendered (only when cash > 0) */}
+        {cash > 0 && (
           <div className="checkout-section checkout-cash-section">
             <label className="input-label">Cash Tendered (₹)</label>
             <input
@@ -191,13 +296,9 @@ export default function CheckoutModal({
               className="checkout-cash-input"
               placeholder="Enter amount..."
               value={cashTendered}
-              onChange={(e) => {
-                setCashTendered(e.target.value);
-                setError('');
-              }}
+              onChange={(e) => { setCashTendered(e.target.value); setError(''); }}
               min="0"
               step="0.01"
-              autoFocus
             />
 
             {/* Quick cash buttons */}
@@ -205,16 +306,16 @@ export default function CheckoutModal({
               <button
                 type="button"
                 className="quick-cash-btn quick-cash-exact"
-                onClick={handleExactAmount}
+                onClick={() => { setCashTendered(String(cash.toFixed(2))); setError(''); }}
               >
-                Exact {formatRupee(total)}
+                Exact {formatRupee(cash)}
               </button>
-              {QUICK_CASH_AMOUNTS.filter((a) => a >= total).map((amount) => (
+              {[100, 200, 500, 1000, 2000].filter((a) => a >= cash).map((amount) => (
                 <button
                   key={amount}
                   type="button"
                   className="quick-cash-btn"
-                  onClick={() => handleQuickCash(amount)}
+                  onClick={() => { setCashTendered(String(amount)); setError(''); }}
                 >
                   ₹{amount}
                 </button>
@@ -222,7 +323,7 @@ export default function CheckoutModal({
             </div>
 
             {/* Change due */}
-            {tendered > 0 && tendered >= total && (
+            {tendered > 0 && tendered >= cash && (
               <div className="checkout-change">
                 <span className="checkout-change-label">Change Due</span>
                 <span className="checkout-change-value">{formatRupee(changeDue)}</span>
@@ -232,7 +333,7 @@ export default function CheckoutModal({
         )}
 
         {/* UPI: QR Code Render */}
-        {paymentMethod === 'UPI' && (
+        {showUpiQr && (
           <div className="checkout-section checkout-upi-section">
             {upiLoading ? (
               <div className="upi-loading">
@@ -275,10 +376,9 @@ export default function CheckoutModal({
           <Button 
             onClick={handleSubmit} 
             loading={loading}
-            disabled={paymentMethod === 'UPI' && (!upiData || error)}
-            className={paymentMethod === 'UPI' ? 'btn-upi-confirm' : ''}
+            disabled={!isBalanced}
           >
-            {getSubmitLabel()}
+            Complete & Print Bill — {formatRupee(total)}
           </Button>
         </div>
       </div>

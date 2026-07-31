@@ -98,15 +98,24 @@ def generate_settlement_pdf(settlement):
 
     orders = settlement.orders.filter(status='COMPLETED').order_by('created_at')
 
-    order_data = [['#', 'Time', 'Payment', 'Items', 'Total (₹)']]
+    order_data = [['#', 'Time', 'Table', 'Payment', 'Total (₹)']]
     for order in orders:
-        item_count = order.items.count()
         order_time = timezone.localtime(order.created_at).strftime('%I:%M %p')
+        # Build split payment summary
+        payment_parts = []
+        if order.cash_amount > 0:
+            payment_parts.append(f'Cash ₹{order.cash_amount:,.0f}')
+        if order.upi_amount > 0:
+            payment_parts.append(f'UPI ₹{order.upi_amount:,.0f}')
+        if order.card_amount > 0:
+            payment_parts.append(f'Card ₹{order.card_amount:,.0f}')
+        payment_str = ' + '.join(payment_parts) if payment_parts else '-'
+
         order_data.append([
             f"#{order.id}",
             order_time,
-            order.payment_method or '-',
-            str(item_count),
+            order.table_number or '-',
+            payment_str,
             f"₹ {order.total_amount:,.2f}",
         ])
 

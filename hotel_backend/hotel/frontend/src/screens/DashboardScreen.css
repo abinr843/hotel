@@ -78,6 +78,7 @@
 .revenue-card.card-total::before { background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
 .revenue-card.card-cash::before { background: linear-gradient(90deg, #10b981, #059669); }
 .revenue-card.card-upi::before { background: linear-gradient(90deg, #8b5cf6, #6366f1); }
+.revenue-card.card-card::before { background: linear-gradient(90deg, #ec4899, #db2777); }
 .revenue-card.card-orders::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
 
 .revenue-card-icon {

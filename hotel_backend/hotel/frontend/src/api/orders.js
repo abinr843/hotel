@@ -4,9 +4,11 @@ import API from './axios';
  * Order / Cart API operations.
  */
 
-/** Create a new DRAFT order. */
-export async function createDraftOrder() {
-  const res = await API.post('/orders/create-draft/');
+/** Create a new DRAFT order with optional table number. */
+export async function createDraftOrder(tableNumber = '') {
+  const payload = {};
+  if (tableNumber) payload.table_number = tableNumber;
+  const res = await API.post('/orders/create-draft/', payload);
   return res.data;
 }
 
@@ -41,14 +43,22 @@ export async function cartAction(orderId, action, payload = {}) {
 }
 
 /**
- * Finalize a DRAFT order to COMPLETED.
+ * Finalize a DRAFT order to COMPLETED with split payment.
  * @param {number} orderId
- * @param {object} paymentData - { payment_method: 'CASH'|'UPI'|'CARD', cash_tendered?: number }
+ * @param {object} paymentData - { cash_amount, upi_amount, card_amount, cash_tendered? }
  * @returns {object} Full completed order
  */
 export async function checkoutOrder(orderId, paymentData) {
   const res = await API.post(`/orders/${orderId}/checkout/`, paymentData);
   return res.data;
+}
+
+/**
+ * Delete a DRAFT order permanently.
+ * @param {number} orderId
+ */
+export async function deleteOrder(orderId) {
+  await API.delete(`/orders/${orderId}/`);
 }
 
 /**

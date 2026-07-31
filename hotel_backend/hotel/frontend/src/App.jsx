@@ -4,12 +4,14 @@ import ProtectedRoute from './components/ProtectedRoute';
 import TopAppBar from './components/TopAppBar';
 import SideNav from './components/SideNav';
 import OfflineBanner from './components/OfflineBanner';
+import UpdateNoticeModal from './components/UpdateNoticeModal';
 import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import MenuScreen from './screens/MenuScreen';
 import BillingScreen from './screens/BillingScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import SettlementScreen from './screens/SettlementScreen';
+import UpdatesScreen from './screens/UpdatesScreen';
 
 // The App Shell layout wraps protected routes
 function AppShell() {
@@ -23,6 +25,8 @@ function AppShell() {
       <main className="main-content">
         <Outlet />
       </main>
+      
+      <UpdateNoticeModal />
     </div>
   );
 }
@@ -48,6 +52,7 @@ export default function App() {
         <Route path="/orders" element={<BillingScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="/settlement" element={<SettlementScreen />} />
+        <Route path="/updates" element={<UpdatesScreen />} />
         
         {/* Default route inside shell */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

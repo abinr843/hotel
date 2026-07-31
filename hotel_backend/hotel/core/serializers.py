@@ -71,18 +71,34 @@ class OrderSerializer(serializers.ModelSerializer):
     """Full order representation including nested items and computed totals."""
     items = OrderItemReadSerializer(many=True, read_only=True)
     item_count = serializers.SerializerMethodField()
+    payment_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
-            'id', 'status', 'total_amount', 'payment_method',
+            'id', 'status', 'total_amount',
+            'cash_amount', 'upi_amount', 'card_amount',
             'cash_tendered', 'change_due',
+            'table_number',
             'created_at', 'voided_at', 'void_reason',
-            'item_count', 'items',
+            'item_count', 'items', 'payment_summary',
         ]
 
     def get_item_count(self, obj) -> int:
         return sum(item.quantity for item in obj.items.all())
+
+    def get_payment_summary(self, obj) -> str:
+        """Human-readable payment breakdown for display."""
+        if obj.status == 'DRAFT':
+            return ''
+        parts = []
+        if obj.cash_amount > 0:
+            parts.append(f'Cash ₹{obj.cash_amount}')
+        if obj.upi_amount > 0:
+            parts.append(f'UPI ₹{obj.upi_amount}')
+        if obj.card_amount > 0:
+            parts.append(f'Card ₹{obj.card_amount}')
+        return ' + '.join(parts) if parts else '—'
 
 
 class CartActionSerializer(serializers.Serializer):
@@ -114,22 +130,51 @@ class CartActionSerializer(serializers.Serializer):
 
 class CheckoutSerializer(serializers.Serializer):
     """
-    Validates checkout payload: payment_method and optional cash_tendered.
+    Validates checkout payload for split payments.
+    The sum of cash_amount + upi_amount + card_amount must equal the order total.
+    cash_tendered is required when cash_amount > 0.
     """
-    PAYMENT_CHOICES = [('CASH', 'Cash'), ('UPI', 'UPI'), ('CARD', 'Card')]
-
-    payment_method = serializers.ChoiceField(choices=PAYMENT_CHOICES)
+    cash_amount = serializers.DecimalField(
+        max_digits=12, decimal_places=2, required=False, default=0, min_value=0,
+    )
+    upi_amount = serializers.DecimalField(
+        max_digits=12, decimal_places=2, required=False, default=0, min_value=0,
+    )
+    card_amount = serializers.DecimalField(
+        max_digits=12, decimal_places=2, required=False, default=0, min_value=0,
+    )
     cash_tendered = serializers.DecimalField(
         max_digits=12, decimal_places=2, required=False, min_value=0,
     )
 
     def validate(self, attrs):
-        if attrs['payment_method'] == 'CASH':
-            if not attrs.get('cash_tendered'):
+        from decimal import Decimal
+        cash = attrs.get('cash_amount') or Decimal('0')
+        upi = attrs.get('upi_amount') or Decimal('0')
+        card = attrs.get('card_amount') or Decimal('0')
+        total_payment = cash + upi + card
+
+        if total_payment <= 0:
+            raise serializers.ValidationError(
+                'At least one payment amount must be greater than zero.'
+            )
+
+        if cash > 0:
+            tendered = attrs.get('cash_tendered')
+            if not tendered or tendered <= 0:
                 raise serializers.ValidationError(
-                    {'cash_tendered': 'Cash tendered is required for CASH payments.'}
+                    {'cash_tendered': 'Cash tendered is required when paying with cash.'}
+                )
+            if tendered < cash:
+                raise serializers.ValidationError(
+                    {'cash_tendered': f'Cash tendered must be at least ₹{cash}.'}
                 )
         return attrs
+
+
+class CreateDraftSerializer(serializers.Serializer):
+    """Validates draft order creation payload."""
+    table_number = serializers.CharField(max_length=20, required=False, allow_blank=True, default='')
 
 
 class VoidOrderSerializer(serializers.Serializer):

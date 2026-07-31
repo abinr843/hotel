@@ -12,7 +12,7 @@ from .models import MenuItem, Order, VoidAuditLog, EODSettlement
 from .serializers import (
     MenuItemSerializer, OrderSerializer, CartActionSerializer,
     CheckoutSerializer, VoidOrderSerializer, VoidAuditLogSerializer,
-    EODSettlementSerializer, SettlementCreateSerializer,
+    EODSettlementSerializer, SettlementCreateSerializer, CreateDraftSerializer,
 )
 from .services import (
     check_database_health,
@@ -22,6 +22,7 @@ from .services import (
     handle_cart_action,
     checkout_order,
     void_order,
+    delete_draft_order,
     get_daily_analytics,
     generate_upi_link,
     get_food_ranking,
@@ -98,8 +99,10 @@ class OrderViewSet(viewsets.GenericViewSet):
         """
         List orders, optionally filtered by ?status= and defaulting to today.
         Supports: ?status=COMPLETED&date=today (or YYYY-MM-DD)
+        For DRAFT orders: automatically limits to last 48 hours.
         """
         from django.utils import timezone
+        from datetime import timedelta
 
         queryset = self.get_queryset()
 
@@ -107,13 +110,21 @@ class OrderViewSet(viewsets.GenericViewSet):
         status_filter = request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+            # For DRAFT orders, only show those from the last 48 hours
+            if status_filter == 'DRAFT':
+                cutoff = timezone.now() - timedelta(hours=48)
+                queryset = queryset.filter(created_at__gte=cutoff)
+        else:
+            # Default: exclude DRAFT orders from the general list
+            queryset = queryset.exclude(status='DRAFT')
 
-        # Filter by date (defaults to today)
-        date_filter = request.query_params.get('date', 'today')
-        if date_filter == 'today':
-            queryset = queryset.filter(created_at__date=timezone.localdate())
-        elif date_filter != 'all':
-            queryset = queryset.filter(created_at__date=date_filter)
+        # Filter by date (defaults to today, skip for DRAFT)
+        if status_filter != 'DRAFT':
+            date_filter = request.query_params.get('date', 'today')
+            if date_filter == 'today':
+                queryset = queryset.filter(created_at__date=timezone.localdate())
+            elif date_filter != 'all':
+                queryset = queryset.filter(created_at__date=date_filter)
 
         queryset = queryset.order_by('-created_at')
         serializer = self.get_serializer(queryset, many=True)
@@ -134,8 +145,11 @@ class OrderViewSet(viewsets.GenericViewSet):
     )
     @action(detail=False, methods=['post'], url_path='create-draft')
     def create_draft(self, request):
-        """Create a new empty DRAFT order."""
-        order = create_draft_order()
+        """Create a new empty DRAFT order with optional table_number."""
+        draft_serializer = CreateDraftSerializer(data=request.data)
+        draft_serializer.is_valid(raise_exception=True)
+        table_number = draft_serializer.validated_data.get('table_number', '')
+        order = create_draft_order(table_number=table_number)
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -184,12 +198,27 @@ class OrderViewSet(viewsets.GenericViewSet):
         with transaction.atomic():
             completed_order = checkout_order(
                 order,
-                payment_method=validated['payment_method'],
+                cash_amount=validated.get('cash_amount'),
+                upi_amount=validated.get('upi_amount'),
+                card_amount=validated.get('card_amount'),
                 cash_tendered=validated.get('cash_tendered'),
             )
 
         serializer = self.get_serializer(completed_order)
         return Response(serializer.data)
+
+    @extend_schema(
+        summary='Delete Draft Order',
+        description='Permanently delete a DRAFT order. Only DRAFT orders can be deleted.',
+        request=None,
+        responses={204: None},
+        tags=['Orders'],
+    )
+    def destroy(self, request, pk=None):
+        """Delete a DRAFT order."""
+        order = self.get_object()
+        delete_draft_order(order)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         summary='Void Order',

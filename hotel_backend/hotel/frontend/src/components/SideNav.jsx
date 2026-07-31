@@ -6,6 +6,7 @@ const navItems = [
   { path: '/menu', label: 'Menu', icon: '🍽️' },
   { path: '/orders', label: 'Orders', icon: '📋' },
   { path: '/settlement', label: 'Close Shift', icon: '💰' },
+  { path: '/updates', label: 'Updates', icon: '✨' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -36,7 +37,7 @@ export default function SideNav({ isOpen, onClose }) {
         </ul>
         <div className="sidenav-footer">
           <span className="text-muted" style={{ fontSize: 'var(--font-size-xs)' }}>
-            v1.0.0
+            v2.0.0
           </span>
         </div>
       </nav>

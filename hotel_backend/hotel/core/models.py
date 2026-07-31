@@ -38,31 +38,28 @@ class Order(models.Model):
         COMPLETED = 'COMPLETED', 'Completed'
         CANCELLED_VOIDED = 'CANCELLED-VOIDED', 'Cancelled/Voided'
 
-    class PaymentMethodChoices(models.TextChoices):
-        CASH = 'CASH', 'Cash'
-        UPI = 'UPI', 'UPI'
-        CARD = 'CARD', 'Card'
-
     status = models.CharField(
         max_length=20,
         choices=StatusChoices.choices,
         default=StatusChoices.DRAFT
     )
-    payment_method = models.CharField(
-        max_length=10,
-        choices=PaymentMethodChoices.choices,
-        null=True,
-        blank=True
-    )
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    
+
+    # Split payment amounts — sum must equal total_amount at checkout
+    cash_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    upi_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    card_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
     cash_tendered = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     change_due = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    
+
+    # Optional table identifier (e.g. "T5", "Table 12", "Parcel")
+    table_number = models.CharField(max_length=20, null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     voided_at = models.DateTimeField(null=True, blank=True)
     void_reason = models.TextField(null=True, blank=True)
-    
+
     shift = models.ForeignKey(
         EODSettlement,
         on_delete=models.SET_NULL,
@@ -72,7 +69,8 @@ class Order(models.Model):
     )
 
     def __str__(self):
-        return f"Order #{self.id} - {self.status}"
+        table_str = f" (Table {self.table_number})" if self.table_number else ""
+        return f"Order #{self.id}{table_str} - {self.status}"
 
 
 class OrderItem(models.Model):

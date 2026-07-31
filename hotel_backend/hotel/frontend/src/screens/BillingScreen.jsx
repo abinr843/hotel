@@ -7,6 +7,7 @@ import Spinner from '../components/Spinner';
 import ItemCustomizationModal from '../components/ItemCustomizationModal';
 import CheckoutModal from '../components/CheckoutModal';
 import OrderHistoryPanel from '../components/OrderHistoryPanel';
+import DraftOrdersPanel from '../components/DraftOrdersPanel';
 import './BillingScreen.css';
 
 /**
@@ -56,6 +57,10 @@ export default function BillingScreen() {
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [draftsOpen, setDraftsOpen] = useState(false);
+
+  // --- Table number ---
+  const [tableNumber, setTableNumber] = useState('');
 
   // Snapshot for rollback
   const orderSnapshotRef = useRef(null);
@@ -134,7 +139,7 @@ export default function BillingScreen() {
 
   const ensureOrder = async () => {
     if (order) return order;
-    const newOrder = await createDraftOrder();
+    const newOrder = await createDraftOrder(tableNumber);
     setOrder(newOrder);
     return newOrder;
   };
@@ -389,6 +394,15 @@ export default function BillingScreen() {
   /** Start fresh draft. */
   const handleNewOrder = () => {
     setOrder(null);
+    setTableNumber('');
+    orderSnapshotRef.current = null;
+    pendingUpdatesRef.current = {};
+  };
+
+  /** Resume a draft order from the DraftOrdersPanel. */
+  const handleResumeDraft = (draftOrder) => {
+    setOrder(draftOrder);
+    setTableNumber(draftOrder.table_number || '');
     orderSnapshotRef.current = null;
     pendingUpdatesRef.current = {};
   };
@@ -455,12 +469,26 @@ export default function BillingScreen() {
             {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <button className="cart-new-order-btn touch-target" onClick={() => setDraftsOpen(true)}>📝 Drafts</button>
             <button className="cart-new-order-btn touch-target" onClick={() => setHistoryOpen(true)}>📋 History</button>
             {order && <span className="order-id-tag">#{order.id}</span>}
             {order && (
               <button className="cart-new-order-btn touch-target" onClick={handleNewOrder}>+ New</button>
             )}
           </div>
+        </div>
+
+        {/* Table number input */}
+        <div className="cart-table-input-row">
+          <label className="cart-table-label">🍽️ Table</label>
+          <input
+            type="text"
+            className="cart-table-input"
+            placeholder="e.g. T5, Parcel"
+            value={tableNumber}
+            onChange={(e) => setTableNumber(e.target.value)}
+            maxLength={20}
+          />
         </div>
 
         {!order || order.items.length === 0 ? (
@@ -562,6 +590,12 @@ export default function BillingScreen() {
       <OrderHistoryPanel
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
+      />
+
+      <DraftOrdersPanel
+        isOpen={draftsOpen}
+        onClose={() => setDraftsOpen(false)}
+        onResumeDraft={handleResumeDraft}
       />
     </div>
   );
